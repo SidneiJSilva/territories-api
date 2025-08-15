@@ -3,10 +3,10 @@ const app = express();
 app.use(express.json());
 
 const territoriesRoutes = require('./routes/territories');
-// const pessoasRoutes = require('./routes/pessoas'); // futuro
+const peopleRoutes = require('./routes/people');
 
 app.use('/territories', territoriesRoutes);
-// app.use('/pessoas', pessoasRoutes);
+app.use('/people', peopleRoutes);
 
 app.listen(3000, () => {
   console.log('Servidor rodando na porta 3000');
