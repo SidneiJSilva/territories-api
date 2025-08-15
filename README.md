@@ -40,14 +40,15 @@ api/
 ```bash
 git clone git@github.com:SEU_USUARIO/NOME_DO_REPOSITORIO.git
 cd NOME_DO_REPOSITORIO
+```
 
-## 2. Subir os containers
+### 2. Subir os containers
 docker compose up -d --build
 
-## 3. Verificar logs
+### 3. Verificar logs
 docker compose logs -f
 
-📡 Endpoints
+## 📡 Endpoints
 
 Listar todos os territórios
 GET /territories/territories-list
@@ -55,7 +56,7 @@ GET /territories/territories-list
 Buscar território por ID
 GET /territories/:id
 
-🗄 Estrutura do Banco de Dados
+## 🗄 Estrutura do Banco de Dados
 
 -territories
 -territory-area
