@@ -1,25 +1,26 @@
-version: '3.8'
 services:
   api:
     build: .
     ports:
       - "3000:3000"
     environment:
+      PORT: 3000
       PGHOST: db
-      PGUSER: api_user
-      PGPASSWORD: sidnei1982
-      PGDATABASE: apidb
+      PGUSER: territories_user
+      PGPASSWORD: territories_dev
+      PGDATABASE: territories
+      PGPORT: 5432
     depends_on:
       - db
 
   db:
     image: postgres:15
     environment:
-      POSTGRES_USER: api_user
-      POSTGRES_PASSWORD: sidnei1982
-      POSTGRES_DB: apidb
+      POSTGRES_USER: territories_user
+      POSTGRES_PASSWORD: territories_dev
+      POSTGRES_DB: territories
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - territories_db_data:/var/lib/postgresql/data
 
 volumes:
-  db_data:
+  territories_db_data:
