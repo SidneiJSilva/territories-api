@@ -62,7 +62,28 @@ async function fetchTerritoryDetails(id) {
   };
 }
 
+async function updateTerritorySync(territoryId, synced) {
+  const result = await pool.query(
+    `
+      UPDATE territories
+      SET synced = $1
+      WHERE id = $2
+      RETURNING
+        id,
+        synced;
+    `,
+    [synced, territoryId],
+  );
+
+  if (result.rows.length === 0) {
+    throw new Error("TERRITORY_NOT_FOUND");
+  }
+
+  return result.rows[0];
+}
+
 module.exports = {
   fetchTerritories,
   fetchTerritoryDetails,
+  updateTerritorySync
 };

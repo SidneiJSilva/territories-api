@@ -1,0 +1,2 @@
+ALTER TABLE territories
+ADD COLUMN test_migration BOOLEAN NOT NULL DEFAULT FALSE;

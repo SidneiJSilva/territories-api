@@ -3,6 +3,8 @@ const pool = require("./db");
 
 const peopleRoutes = require("./routes/people");
 const territoriesRoutes = require("./routes/territories");
+const assignmentsRoutes = require("./routes/assignments");
+const campaignsRoutes = require("./routes/campaigns");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -33,6 +35,8 @@ app.get("/health/db", async (req, res) => {
 
 app.use("/people", peopleRoutes);
 app.use("/territories", territoriesRoutes);
+app.use("/assignments", assignmentsRoutes);
+app.use("/campaigns", campaignsRoutes);
 
 app.listen(PORT, () => {
   console.log(`Territories API running on port ${PORT}`);

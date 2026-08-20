@@ -36,7 +36,46 @@ async function getTerritoryDetails(req, res) {
   }
 }
 
+async function updateTerritorySync(req, res) {
+  try {
+    const territoryId = Number(req.params.id);
+    const { synced } = req.body;
+
+    if (!Number.isInteger(territoryId) || territoryId <= 0) {
+      return res.status(400).json({
+        error: "Invalid territory ID",
+      });
+    }
+
+    if (typeof synced !== "boolean") {
+      return res.status(400).json({
+        error: "synced must be a boolean",
+      });
+    }
+
+    const territory = await territoriesService.updateTerritorySync(
+      territoryId,
+      synced,
+    );
+
+    res.json(territory);
+  } catch (error) {
+    console.error("Error updating territory sync:", error);
+
+    if (error.message === "TERRITORY_NOT_FOUND") {
+      return res.status(404).json({
+        error: "Territory not found",
+      });
+    }
+
+    res.status(500).json({
+      error: "Unable to update territory sync status",
+    });
+  }
+}
+
 module.exports = {
   getTerritories,
   getTerritoryDetails,
+  updateTerritorySync
 };

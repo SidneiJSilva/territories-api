@@ -8,7 +8,8 @@
     "docker:build": "docker compose build --no-cache",
     "docker:down": "docker compose down",
     "docker:up": "docker compose up -d",
-    "docker:rebuild": "npm run docker:down && npm run docker:build && npm run docker:up"
+    "docker:rebuild": "npm run docker:down && npm run docker:build && npm run docker:up",
+    "db:migrate": "node src/migrations.js"
   },
   "keywords": [],
   "author": "",
