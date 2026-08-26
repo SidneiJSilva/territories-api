@@ -89,7 +89,36 @@ async function returnAssignment(req, res) {
   }
 }
 
+async function deleteAssignment(req, res) {
+  try {
+    const assignmentId = Number(req.params.id);
+
+    if (!Number.isInteger(assignmentId) || assignmentId <= 0) {
+      return res.status(400).json({
+        error: "Invalid assignment ID",
+      });
+    }
+
+    await assignmentsService.deleteAssignment(assignmentId);
+
+    res.status(204).send();
+  } catch (error) {
+    console.error("Error deleting assignment:", error);
+
+    if (error.message === "ASSIGNMENT_NOT_FOUND") {
+      return res.status(404).json({
+        error: "Assignment not found",
+      });
+    }
+
+    res.status(500).json({
+      error: "Unable to delete assignment",
+    });
+  }
+}
+
 module.exports = {
   createAssignment,
-  returnAssignment
+  returnAssignment,
+  deleteAssignment
 };

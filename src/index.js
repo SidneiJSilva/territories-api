@@ -5,6 +5,7 @@ const peopleRoutes = require("./routes/people");
 const territoriesRoutes = require("./routes/territories");
 const assignmentsRoutes = require("./routes/assignments");
 const campaignsRoutes = require("./routes/campaigns");
+const settingsRoutes = require("./routes/settings");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,6 +38,7 @@ app.use("/people", peopleRoutes);
 app.use("/territories", territoriesRoutes);
 app.use("/assignments", assignmentsRoutes);
 app.use("/campaigns", campaignsRoutes);
+app.use("/settings", settingsRoutes);
 
 app.listen(PORT, () => {
   console.log(`Territories API running on port ${PORT}`);

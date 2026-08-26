@@ -209,7 +209,58 @@ async function returnAssignment(assignmentId, returnedAt) {
   }
 }
 
+async function deleteAssignment(assignmentId) {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const result = await client.query(
+      `
+        SELECT
+          id,
+          territory_id
+        FROM assignments
+        WHERE id = $1
+        FOR UPDATE;
+      `,
+      [assignmentId],
+    );
+
+    if (result.rows.length === 0) {
+      throw new Error("ASSIGNMENT_NOT_FOUND");
+    }
+
+    const assignment = result.rows[0];
+
+    await client.query(
+      `
+        DELETE FROM assignments
+        WHERE id = $1;
+      `,
+      [assignmentId],
+    );
+
+    await client.query(
+      `
+        UPDATE territories
+        SET synced = FALSE
+        WHERE id = $1;
+      `,
+      [assignment.territory_id],
+    );
+
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 module.exports = {
   createAssignment,
-  returnAssignment
+  returnAssignment,
+  deleteAssignment
 };
