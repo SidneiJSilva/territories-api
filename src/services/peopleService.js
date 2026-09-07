@@ -3,9 +3,9 @@ const pool = require("../db");
 async function fetchPeople() {
   const result = await pool.query(`
     SELECT
-      id,
-      first_name AS "firstName",
-      last_name AS "lastName",
+      id AS "peopleid",
+      first_name AS "firstname",
+      last_name AS "lastname",
       active
     FROM people
     WHERE active = TRUE

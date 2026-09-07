@@ -30,7 +30,7 @@ async function fetchTerritoryDetails(id) {
   const assignmentsResult = await pool.query(
     `
       SELECT
-        a.id,
+        a.id AS "assignmentId",
         a.assigned_at AS "assignedAt",
         a.returned_at AS "returnedAt",
         a.campaign_id AS "campaignId",
@@ -58,6 +58,7 @@ async function fetchTerritoryDetails(id) {
 
   return {
     ...territory,
+    assignmentid: assignmentsResult.rows[0]?.assignmentId || null,
     assignments: assignmentsResult.rows,
   };
 }

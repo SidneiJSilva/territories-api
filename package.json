@@ -16,7 +16,9 @@
   "license": "ISC",
   "description": "Territories API",
   "dependencies": {
+    "cors": "^2.8.6",
     "express": "^5.1.0",
+    "firebase-admin": "^13.10.0",
     "pg": "^8.16.3"
   }
 }

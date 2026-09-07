@@ -10,6 +10,8 @@ services:
       PGPASSWORD: territories_dev
       PGDATABASE: territories
       PGPORT: 5432
+    volumes:
+      - ./secrets:/app/secrets:ro
     depends_on:
       - db
 
