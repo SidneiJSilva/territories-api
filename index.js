@@ -7,7 +7,8 @@ app.use((req, res, next) => {
   next();
 });
 app.use(cors({
-  origin: "http://localhost:4175",
+  // origin: "https://territories-container.vercel.app",
+  origin: "http://localhost:5174"
 }));
 app.use(express.json());
 
