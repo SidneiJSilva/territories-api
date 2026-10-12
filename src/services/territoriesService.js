@@ -56,11 +56,44 @@ async function fetchTerritoryDetails(id) {
     [id],
   );
 
+  const commentsResult = await pool.query(
+    `
+      SELECT
+        id,
+        territory_id AS "territoryId",
+        comment,
+        created_at AS "createdAt"
+      FROM comments
+      WHERE territory_id = $1
+      ORDER BY created_at DESC, id DESC;
+    `,
+    [id],
+  );
+
   return {
     ...territory,
     assignmentid: assignmentsResult.rows[0]?.assignmentId || null,
     assignments: assignmentsResult.rows,
+    comments: commentsResult.rows,
   };
+}
+
+async function deleteTerritoryComment(territoryId, commentId) {
+  const result = await pool.query(
+    `
+      DELETE FROM comments
+      WHERE id = $1
+        AND territory_id = $2
+      RETURNING id;
+    `,
+    [commentId, territoryId],
+  );
+
+  if (result.rows.length === 0) {
+    throw new Error("COMMENT_NOT_FOUND");
+  }
+
+  return result.rows[0];
 }
 
 async function updateTerritorySync(territoryId, synced) {
@@ -83,8 +116,35 @@ async function updateTerritorySync(territoryId, synced) {
   return result.rows[0];
 }
 
+
+async function addTerritoryComment(territoryId, comment) {
+  const result = await pool.query(
+    `
+      INSERT INTO comments (territory_id, comment)
+      SELECT id, $2
+      FROM territories
+      WHERE id = $1
+      RETURNING
+        id,
+        territory_id AS "territoryId",
+        comment,
+        created_at AS "createdAt";
+    `,
+    [territoryId, comment],
+  );
+
+  if (result.rows.length === 0) {
+    throw new Error("TERRITORY_NOT_FOUND");
+  }
+
+  return result.rows[0];
+}
+
+
 module.exports = {
   fetchTerritories,
   fetchTerritoryDetails,
-  updateTerritorySync
+  updateTerritorySync,
+  deleteTerritoryComment,
+  addTerritoryComment
 };
