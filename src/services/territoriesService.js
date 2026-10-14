@@ -1,8 +1,18 @@
 const pool = require("../db");
 
+
 async function fetchTerritories() {
   const result = await pool.query(`
-    SELECT *
+    SELECT
+      *,
+      CASE
+        WHEN status = 'assigned' AND assigned_at IS NOT NULL
+          THEN GREATEST(
+            0,
+            CURRENT_DATE - assigned_at::date
+          )
+        ELSE NULL
+      END AS worked_days
     FROM territories_view
     WHERE active = TRUE
     ORDER BY number;
@@ -10,6 +20,7 @@ async function fetchTerritories() {
 
   return result.rows;
 }
+
 
 async function fetchTerritoryDetails(id) {
   const territoryResult = await pool.query(
