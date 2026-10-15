@@ -133,6 +133,49 @@ async function createAssignment({
   }
 }
 
+
+async function completeAssignmentReturn(client, assignment, returnedDate) {
+  if (assignment.returned_at !== null) {
+    throw new Error("ASSIGNMENT_ALREADY_RETURNED");
+  }
+
+  if (returnedDate < assignment.assigned_at) {
+    throw new Error("RETURN_DATE_BEFORE_ASSIGNMENT");
+  }
+
+  const updateResult = await client.query(
+    `
+      UPDATE assignments
+      SET returned_at = $1
+      WHERE id = $2
+        AND returned_at IS NULL
+      RETURNING
+        id,
+        territory_id AS "territoryId",
+        person_id AS "personId",
+        campaign_id AS "campaignId",
+        assigned_at AS "assignedAt",
+        returned_at AS "returnedAt";
+    `,
+    [returnedDate, assignment.id],
+  );
+
+  if (updateResult.rows.length === 0) {
+    throw new Error("ASSIGNMENT_ALREADY_RETURNED");
+  }
+
+  await client.query(
+    `
+      UPDATE territories
+      SET synced = FALSE
+      WHERE id = $1;
+    `,
+    [assignment.territory_id],
+  );
+
+  return updateResult.rows[0];
+}
+
 async function returnAssignment(assignmentId, returnedAt) {
   const client = await pool.connect();
 
@@ -141,11 +184,7 @@ async function returnAssignment(assignmentId, returnedAt) {
 
     const result = await client.query(
       `
-        SELECT
-          id,
-          territory_id,
-          assigned_at,
-          returned_at
+        SELECT id, territory_id, assigned_at, returned_at
         FROM assignments
         WHERE id = $1
         FOR UPDATE;
@@ -158,49 +197,79 @@ async function returnAssignment(assignmentId, returnedAt) {
     }
 
     const assignment = result.rows[0];
-
-    if (assignment.returned_at !== null) {
-      throw new Error("ASSIGNMENT_ALREADY_RETURNED");
-    }
-
     const returnedDate = new Date(returnedAt);
 
     if (Number.isNaN(returnedDate.getTime())) {
       throw new Error("INVALID_RETURN_DATE");
     }
 
-    if (returnedDate < assignment.assigned_at) {
-      throw new Error("RETURN_DATE_BEFORE_ASSIGNMENT");
-    }
-
-    const updateResult = await client.query(
-      `
-        UPDATE assignments
-        SET returned_at = $1
-        WHERE id = $2
-        RETURNING
-          id,
-          territory_id AS "territoryId",
-          person_id AS "personId",
-          campaign_id AS "campaignId",
-          assigned_at AS "assignedAt",
-          returned_at AS "returnedAt";
-      `,
-      [returnedDate.toISOString(), assignmentId],
-    );
-
-    await client.query(
-      `
-        UPDATE territories
-        SET synced = FALSE
-        WHERE id = $1;
-      `,
-      [assignment.territory_id],
+    const updatedAssignment = await completeAssignmentReturn(
+      client,
+      assignment,
+      returnedDate,
     );
 
     await client.query("COMMIT");
+    return updatedAssignment;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
 
-    return updateResult.rows[0];
+async function returnActiveTerritoryAssignment(territoryId) {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const territoryResult = await client.query(
+      `
+        SELECT id
+        FROM territories
+        WHERE id = $1
+        FOR UPDATE;
+      `,
+      [territoryId],
+    );
+
+    if (territoryResult.rows.length === 0) {
+      throw new Error("TERRITORY_NOT_FOUND");
+    }
+
+    const assignmentResult = await client.query(
+      `
+        SELECT id, territory_id, assigned_at, returned_at
+        FROM assignments
+        WHERE territory_id = $1
+          AND returned_at IS NULL
+        FOR UPDATE;
+      `,
+      [territoryId],
+    );
+
+    if (assignmentResult.rows.length === 0) {
+      throw new Error("ACTIVE_ASSIGNMENT_NOT_FOUND");
+    }
+
+    const assignment = assignmentResult.rows[0];
+
+    const dateResult = await client.query(
+      "SELECT NOW() AS returned_at;",
+    );
+
+    const returnedDate = dateResult.rows[0].returned_at;
+
+    const updatedAssignment = await completeAssignmentReturn(
+      client,
+      assignment,
+      returnedDate,
+    );
+
+    await client.query("COMMIT");
+    return updatedAssignment;
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
@@ -262,5 +331,6 @@ async function deleteAssignment(assignmentId) {
 module.exports = {
   createAssignment,
   returnAssignment,
-  deleteAssignment
+  returnActiveTerritoryAssignment,
+  deleteAssignment,
 };

@@ -1,4 +1,5 @@
 const territoriesService = require("../services/territoriesService");
+const assignmentsService = require("../services/assignmentsService");
 
 async function getTerritories(req, res) {
   try {
@@ -113,6 +114,52 @@ async function deleteTerritoryComment(req, res) {
 }
 
 
+async function returnTerritory(req, res) {
+  try {
+    const territoryId = Number(req.params.id);
+
+    if (!Number.isSafeInteger(territoryId) || territoryId <= 0) {
+      return res.status(400).json({
+        error: "Invalid territory ID",
+      });
+    }
+
+    const assignment =
+      await assignmentsService.returnActiveTerritoryAssignment(
+        territoryId,
+      );
+
+    return res.json(assignment);
+  } catch (error) {
+    console.error("Error returning territory:", error);
+
+    const errors = {
+      TERRITORY_NOT_FOUND: [404, "Territory not found"],
+      ACTIVE_ASSIGNMENT_NOT_FOUND: [
+        409,
+        "Territory has no active assignment",
+      ],
+      ASSIGNMENT_ALREADY_RETURNED: [
+        409,
+        "Assignment already returned",
+      ],
+      RETURN_DATE_BEFORE_ASSIGNMENT: [
+        400,
+        "Return date cannot be before assignment date",
+      ],
+    };
+
+    const [status, message] = errors[error.message] || [
+      500,
+      "Unable to return territory",
+    ];
+
+    return res.status(status).json({
+      error: message,
+    });
+  }
+}
+
 async function addTerritoryComment(req, res) {
   try {
     const territoryId = Number(req.params.id);
@@ -160,5 +207,6 @@ module.exports = {
   getTerritoryDetails,
   updateTerritorySync,
   deleteTerritoryComment,
-  addTerritoryComment
+  addTerritoryComment,
+  returnTerritory,
 };
