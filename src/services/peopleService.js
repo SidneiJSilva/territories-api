@@ -3,12 +3,18 @@ const pool = require("../db");
 async function fetchPeople() {
   const result = await pool.query(`
     SELECT
-      id AS "peopleid",
-      first_name AS "firstname",
-      last_name AS "lastname",
-      active
-    FROM people
-    WHERE active = TRUE
+      p.id AS "peopleid",
+      p.first_name AS "firstname",
+      p.last_name AS "lastname",
+      p.active,
+      p.tp_approved AS "tpapproved",
+      p.tech_skills AS "techskills",
+      p.regular_pionner AS "regularpionner",
+      pg.label AS "gender",
+      p.gender AS "genderid"
+    FROM people p
+    LEFT JOIN people_gender pg
+      ON p.gender = pg.id
     ORDER BY first_name ASC, last_name ASC;
   `);
 
