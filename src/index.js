@@ -15,8 +15,8 @@ const PORT = process.env.PORT || 3000;
 console.log("Firebase Admin inicializado:", !!admin);
 
 app.use(cors({
-  origin: "https://territories-container.vercel.app"
-  // origin: "http://localhost:4175"
+  // origin: "https://territories-container.vercel.app"
+  origin: "http://localhost:4175"
 }));
 
 app.use(express.json());

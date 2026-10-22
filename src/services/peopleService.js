@@ -87,7 +87,66 @@ async function fetchPersonTerritories(peopleId, batch) {
   };
 }
 
+const peopleColumnMap = {
+  firstname: 'first_name',
+  lastname: 'last_name',
+  active: 'active',
+  regularpionner: 'regular_pionner',
+  techskills: 'tech_skills',
+  tpapproved: 'tp_approved',
+}
+
+async function updatePerson(peopleId, changes) {
+  const fields = Object.keys(changes)
+  const values = [peopleId]
+
+  const setClauses = fields.map((field, index) => {
+    values.push(changes[field])
+
+    return `${peopleColumnMap[field]} = $${index + 2}`
+  })
+
+  const result = await pool.query(
+    `
+      UPDATE people
+      SET ${setClauses.join(', ')}
+      WHERE id = $1
+      RETURNING
+        id AS "peopleid",
+        first_name AS "firstname",
+        last_name AS "lastname",
+        active,
+        tp_approved AS "tpapproved",
+        tech_skills AS "techskills",
+        regular_pionner AS "regularpionner",
+        gender AS "genderid";
+    `,
+    values,
+  )
+
+  if (result.rows.length === 0) {
+    return null
+  }
+
+  const person = result.rows[0]
+
+  const genderResult = await pool.query(
+    `
+      SELECT label
+      FROM people_gender
+      WHERE id = $1;
+    `,
+    [person.genderid],
+  )
+
+  return {
+    ...person,
+    gender: genderResult.rows[0]?.label ?? null,
+  }
+}
+
 module.exports = {
   fetchPeople,
-  fetchPersonTerritories
+  fetchPersonTerritories,
+  updatePerson
 };

@@ -1,4 +1,85 @@
-const peopleService = require("../services/peopleService");
+const peopleService = require('../services/peopleService')
+
+const allowedFields = {
+  firstname: 'string',
+  lastname: 'string',
+  active: 'boolean',
+  regularpionner: 'boolean',
+  techskills: 'boolean',
+  tpapproved: 'boolean',
+}
+
+async function updatePerson(req, res) {
+  try {
+    const peopleId = Number(req.params.id)
+    const changes = req.body
+
+    if (!Number.isInteger(peopleId) || peopleId <= 0) {
+      return res.status(400).json({
+        error: 'Invalid people ID',
+      })
+    }
+
+    if (
+      !changes ||
+      typeof changes !== 'object' ||
+      Array.isArray(changes)
+    ) {
+      return res.status(400).json({
+        error: 'Request body must be an object',
+      })
+    }
+
+    const fields = Object.keys(changes)
+
+    if (fields.length === 0) {
+      return res.status(400).json({
+        error: 'No fields provided for update',
+      })
+    }
+
+    const invalidFields = fields.filter(
+      field => !Object.hasOwn(allowedFields, field),
+    )
+
+    if (invalidFields.length > 0) {
+      return res.status(400).json({
+        error: 'Invalid fields',
+        fields: invalidFields,
+      })
+    }
+
+    const invalidTypes = fields.filter(
+      field => typeof changes[field] !== allowedFields[field],
+    )
+
+    if (invalidTypes.length > 0) {
+      return res.status(400).json({
+        error: 'Invalid field types',
+        fields: invalidTypes,
+      })
+    }
+
+    const person = await peopleService.updatePerson(
+      peopleId,
+      changes,
+    )
+
+    if (!person) {
+      return res.status(404).json({
+        error: 'Person not found',
+      })
+    }
+
+    return res.json(person)
+  } catch (error) {
+    console.error('Error updating person:', error)
+
+    return res.status(500).json({
+      error: 'Unable to update person',
+    })
+  }
+}
 
 async function getPeople(req, res) {
   try {
@@ -54,5 +135,6 @@ async function getPersonTerritories(req, res) {
 
 module.exports = {
   getPeople,
-  getPersonTerritories
+  getPersonTerritories,
+  updatePerson
 };
